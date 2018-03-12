@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  BABAVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      InstanceTenancy: default
+      Tags:
+      - Key: Env
+        Value: Test
+  publicnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: BABAVPC
+      CidrBlock: 192.168.10.0/24
+      AvailabilityZone: "us-east-1a"
+      Tags:
+      - Key: Env
+        Value: Test
+  privatenet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: BABAVPC
+      CidrBlock: 192.168.11.0/24
+      AvailabilityZone: "us-east-1b"
+      Tags:
+      - Key: Env
+        Value: Test
+  BABAInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: Env
+        Value: Test
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: BABAVPC
+      InternetGatewayId:
+        Ref: BABAInternetGateway
+  BABApubrouter:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: BABAVPC
+      Tags:
+      - Key: Env
+        Value: test
+  BABAprivrouter:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: BABAVPC
+      Tags:
+      - Key: Env
+        Value: test
+  attachtopubrouter:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: publicnet01
+      RouteTableId:
+        Ref: BABApubrouter
+  attachtoprivrouter:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: privatenet01
+      RouteTableId:
+        Ref: BABAprivrouter
+  pubigwroute:
+    Type: AWS::EC2::Route
+    DependsOn: BABAInternetGateway
+    Properties:
+      RouteTableId:
+        Ref: BABApubrouter
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: BABAInternetGateway
+  TestInstance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: 'ami-97785bed'
+      KeyName: 'pranee-key'
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          GroupSet:
+            - Ref: "myVPCEC2SecurityGroup"
+          SubnetId:
