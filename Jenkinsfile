@@ -1,3 +1,4 @@
+
 pipeline{
 agent any 
   stages{
@@ -18,6 +19,7 @@ agent any
     {
       steps
       {
+        sleep 2
         println "Deploying Appliaction for${env.Environment}"
       }
     }
