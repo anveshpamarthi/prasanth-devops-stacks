@@ -27,6 +27,14 @@ pipeline
                 }
             }
         }
+		stage('ValidateandRun-CF-Templates'){
+			steps{
+				withAWS(credentials: "awspoc", region: "us-east-2"){
+					cfnValidate(file: 'Master2.yaml')
+					cfnUpdate(stack: "PipeSqsDemo", create: true, file: 'Master2.yaml', timeoutInMinutes: 5)
+				}
+			}
+		}
     }
     post{
         always{
