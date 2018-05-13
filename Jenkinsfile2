@@ -25,7 +25,6 @@ pipeline
                 withAWS(credentials: "awspoc", region: "us-east-2"){
                     s3Upload bucket: 'cfscripts-altus-as', file: 'awssqs.yaml', path: 'AS06/sqs.yaml'
                 }
-                
             }
         }
     }
