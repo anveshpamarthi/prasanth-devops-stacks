@@ -1,4 +1,4 @@
-import org.apache.commons.lang.RandomStringUtils
+6import org.apache.commons.lang.RandomStringUtils
 pipeline
 {
     agent any
@@ -23,7 +23,7 @@ pipeline
         stage('AWSS3Upload'){
             steps{
                 withAWS(credentials: "awspoc", region: "us-east-2"){
-                    s3Upload bucket: 'cfscripts-altus-as', file: 'awssqs.yaml', path: 'AS06/sqs.yaml'
+                    s3Upload bucket: 'cfscripts-altus-as', file: 'awssqs.yaml', path: 'AS066/sqs.yaml'
                 }
             }
         }
