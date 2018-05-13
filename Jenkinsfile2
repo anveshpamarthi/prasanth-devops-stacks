@@ -1,4 +1,4 @@
-6import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang.RandomStringUtils
 pipeline
 {
     agent any
