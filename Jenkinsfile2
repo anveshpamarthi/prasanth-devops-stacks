@@ -1,0 +1,43 @@
+import org.apache.commons.lang.RandomStringUtils
+pipeline
+{
+    agent any
+    stages{
+        stage('AWSPOCDemo'){
+            steps{
+                withAWS(credentials: "awspoc", region: "us-east-2"){
+                    script{
+                        def output = cfnDescribe("AS-API-Demo")
+                        println "It works! output is $output.ArgusServicesWorkspaceApi"
+                    }
+                }
+            }
+        }
+        stage('DemoDirectory'){
+            steps{
+                dir('Examp1le'){
+                    writeFile file:'dummy', text:'baablabala'
+                }
+            }    
+        }
+        stage('AWSS3Upload'){
+            steps{
+                withAWS(credentials: "awspoc", region: "us-east-2"){
+                    s3Upload bucket: 'cfscripts-altus-as', file: 'awssqs.yaml', path: 'AS06/sqs.yaml'
+                }
+                
+            }
+        }
+    }
+    post{
+        always{
+            echo "Deployment is run for $env.Environment"
+        }
+        failure{
+            echo "Error occured"
+        }
+        success{
+            echo "Succesfully deployed to $env.Environment"
+        }
+    }
+}
