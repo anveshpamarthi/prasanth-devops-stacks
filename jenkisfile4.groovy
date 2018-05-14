@@ -10,7 +10,7 @@ pipeline
                 }
             }
         }
-		stage('Validate-Run-CF-Templates'){
+	stage('Validate-Run-CF-Templates'){
 			steps{
 				withAWS(credentials: "altuspoc", region: "us-east-2"){
 					cfnValidate(file: 'Master2.yaml')
@@ -18,13 +18,12 @@ pipeline
 				}
 			}
 		}
-    stages{
         stage('VerifyOutputs'){
             steps{
                 withAWS(credentials: "altuspoc", region: "us-east-2"){
-                                        script{
-                     def output = cfnDescribe("$env.StackName")
-                     println "It works! output is $output.SQSUrl"
+                    script{
+						def output = cfnDescribe("$env.StackName")
+						println "It works! output is $output.SQSUrl"
                     }
                 }
             }
