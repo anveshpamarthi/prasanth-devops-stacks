@@ -16,4 +16,4 @@ Resources:
 Outputs:
   SQSUrl:
     Description: URL of SQS Calc WorkerRole
-    Value: Outputs.ASAPICalcWorkerRoleSqs.Queuename
+    Value:  !GetAtt ASAPICalcWorkerRoleSqs.Outputs.Queuename
