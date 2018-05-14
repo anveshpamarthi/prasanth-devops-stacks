@@ -14,10 +14,21 @@ pipeline
 			steps{
 				withAWS(credentials: "altuspoc", region: "us-east-2"){
 					cfnValidate(file: 'Master2.yaml')
-					cfnUpdate(stack: "PipeSqsDemo", create: true, file: 'Master2.yaml', timeoutInMinutes: 5)
+					cfnUpdate(stack: "$env.StackName", create: true, file: 'Master2.yaml', timeoutInMinutes: 5)
 				}
 			}
 		}
+    stages{
+        stage('VerifyOutputs'){
+            steps{
+                withAWS(credentials: "altuspoc", region: "us-east-2"){
+                                        script{
+                     def output = cfnDescribe("$env.StackName")
+                     println "It works! output is $output.SQSUrl"
+                    }
+                }
+            }
+        }		
     }
     post{
         always{
