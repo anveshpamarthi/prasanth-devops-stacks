@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  SqSName:
+    Type: String
+    Default: poc
+Resources:
+  SQSDemoByCFStack:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      QueueName: !Ref SqSName
+Outputs:
+  Queuename:
+    Description: Name of SQS
+    Value: !Ref SQSDemoByCFStack
+    

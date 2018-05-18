@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvName:
+    Type: String
+    Default: DRASCalc-Queue
+  S3BucketName:
+    Type: String
+    Default: cfscripts-altus-as
+Resources:
+  ASAPICalcWorkerRoleSqs:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/AS06/sqs.yaml"
+      Parameters:
+        SqSName: !Sub ${EnvName}
+Outputs:
+  SQSUrl:
+    Description: URL of SQS Calc WorkerRole
+    Value:  !GetAtt ASAPICalcWorkerRoleSqs.Outputs.Queuename
