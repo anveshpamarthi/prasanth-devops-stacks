@@ -1,0 +1,18 @@
+pipeline{
+    stages{
+        stage('AWS CF Outputs'){
+            steps{
+                withAWS(credentials: "vang", region: 'us-west-2'){
+                    script{
+						def output = cfnDescribe("as-testtest-14")
+						println "http://$output.ArgusServicesWorkspaceApi"
+						println "http://$output.ArgusServicesModelOrganizationApi"
+						println "http://$output.ArgusServicesDataAccessRightsApi"
+						println "http://$output.ArgusServicesProvisionDataStoreApi"
+						println "http://$output.ArgusServicesWorkspaceReportingApi"
+                    }
+                }         
+            }
+        }
+    }
+}
