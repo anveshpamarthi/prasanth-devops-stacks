@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+  APIName:
+    Type: String
+    Default: WorkerReports
+  EC2ImageID:
+    Type: String
+    Default: ami-011d2d64
+  MySecurityGroup:
+    Type: String
+    Default: sg-dc91b7b7
+Resources:
+  LaunchconfigASAPI:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: altus-test-key
+      SecurityGroups:
+      - Ref: MySecurityGroup
+      InstanceType: t2.medium
+      IamInstanceProfile: "ArgusServiceWorkerRole"
+Outputs:
+  LaunchConfigASAPIEndpoint:
+    Description: Model API1 node01
+    Value: !Ref LaunchconfigASAPI
+    Export:
+      Name: "LaunchConfigASAPI"
+

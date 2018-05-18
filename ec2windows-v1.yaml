@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+  BastionInstanceType:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.micro
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-ffea1784
+  Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-4099554f
+  MySecurityGroup:
+    Type: String
+    Default: sg-9497fbe3
+  RedisURL:
+    Type: String
+    Default: "redis.argus.com"
+Resources:
+  ArgusServicesModelOrganizationApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-cab14db7
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet
+          GroupSet: 
+            - !Ref MySecurityGroup
+      UserData:
+        Fn::Base64:
+          !Sub |
+          <powershell>
+          # Invoke Powershell commands for setting Environment variables
+          $url=${RedisURL}
+          [Environment]::SetEnvironmentVariable("AWS:SubmissionsStorageRoot","$url","Machine")
+          [Environment]::SetEnvironmentVariable("AWS:Region","us-east-1","Machine")
+          Start-Sleep -Seconds 5
+          </powershell>
+      Tags:
+      - Key: Name
+        Value: !Sub "ArgusServicesModelOrganizationApi-${EnvironmentName}"
+

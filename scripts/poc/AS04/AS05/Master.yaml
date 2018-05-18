@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+Resources:
+  LaunchConfigGoldenImage:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS05/LaunchConfig.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: LaunchConfigGoldenImage
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS05/NLB-External.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+Outputs:
+  ExtLB01DNSName:
+    Description: End point name of Loadbalancer API01
+    Value: !GetAtt ArgusServicesModelOrganizationAPI.Outputs.ExtLBDNSName

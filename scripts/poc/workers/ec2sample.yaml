@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: poc
+  ModuleName:
+    Type: String
+    Default: WorkerRole
+  APIName:
+    Type: String
+    Default: Calc
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PubSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+  EC2ImageID:
+    Type: String
+    Default: ami-857745e0
+  ASEC2Key:
+    Type: String
+    Default: testing-apis
+  SQLServer:
+    Type: String
+    Default: "18.188.214.1"
+  REDISUrl:
+    Type: String
+    Default: "as-redis-test.9jwysu.ng.0001.use2.cache.amazonaws.com"
+Resources:
+  PrivateTestEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageID
+      InstanceType: t2.medium
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: !Ref PrivSubnet1
+      IamInstanceProfile: "ArgusServices-testS3"
+      Tags:
+      - Key: Name
+        Value: !Sub "PrivateTestEC2-${EnvironmentName}"
+      - Key: Module
+        Value: !Ref ModuleName
+      - Key: SubModule
+        Value: !Ref APIName
+      - Key: Createdby
+        Value: "asteam"
+      - Key: Platform
+        Value: "vanguard"
+      - Key: Env
+        Value: "poc"
+      - Key: Scope
+        Value: "as"
+      - Key: Schedule
+        Value: "usa-office-hours"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          $submodule="${APIName}"
+          if ($submodule -eq "Calc")
+          {
+          [Environment]::SetEnvironmentVariable("AWS:Calc1","calc1","Machine")
+          [Environment]::SetEnvironmentVariable("AWS:Calc2","calc2","Machine")
+          }
+          if ($submodule -eq "Subm")
+          {
+          [Environment]::SetEnvironmentVariable("AWS:Subm1","subm1","Machine")
+          [Environment]::SetEnvironmentVariable("AWS:Subm2","subm2","Machine")
+          }
+          </powershell>
+          <persist>true</persist>
+Outputs:
+  End1Point:
+    Description: End point of first API
+    Value: !GetAtt PrivateTestEC2.PrivateDnsName

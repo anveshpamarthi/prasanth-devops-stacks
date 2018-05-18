@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+  APIName:
+    Type: String
+    Default: WorkerReports
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-d9242194
+  EC2ImageID:
+    Type: String
+    Default: ami-011d2d64
+  MySecurityGroup:
+    Type: String
+    Default: sg-dc91b7b7
+Resources:
+  NLBDemoloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${APIName}"
+      Type: network
+      Subnets:
+      - Ref: Subnet1
+      - Ref: Subnet2
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}"
+      - Key: Env
+        Value: Demo
+  NLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBDemoTargetGroup
+      LoadBalancerArn:
+        Ref: NLBDemoloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLBDemoTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: TCP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3 
+      Name: !Sub "${APIName}"
+      Port: 80
+      Protocol: TCP
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '20'
+      UnhealthyThresholdCount: 3
+      VpcId:
+        Ref: VPC
+  ASAPIASGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - subnet-7709841f
+        - subnet-d9242194
+      LaunchConfigurationName: Fn::ImportValue: LaunchconfigASAPI
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      TargetGroupARNs:
+        - Ref: NLBDemoTargetGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "ASG01-${APIName}"
+          PropagateAtLaunch: true
+        - Key: Env
+          Value: Test
+          PropagateAtLaunch: true

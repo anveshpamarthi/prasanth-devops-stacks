@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  BastionInstanceType:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.micro
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+Resources:
+  PrivateTestEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-25615740
+      KeyName: altus-test-key
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: !Ref PrivSubnet1
+      Tags:
+      - Key: Name
+        Value: !Sub "PrivateTestEC2-${EnvironmentName}"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            yum install -y httpd
+            /etc/init.d/httpd start
+            touch /var/www/html/index.html
+            echo "<b><center><h1>I am from node1" > /var/www/html/index.html
+            x=${EnvironmentName}
+            echo $x > /root/userdata.txt
+Outputs:
+  End1Point:
+    Description: End point of first API
+    Value: !GetAtt PrivateTestEC2.PrivateDnsName
+  Modelapinode01:
+    Description: Model API1 node01
+    Value: !Ref PrivateTestEC2
+    Export:
+      Name: node01api

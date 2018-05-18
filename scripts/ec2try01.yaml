@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+  APIName:
+    Type: String
+    Default: Calc
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.micro
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-ffea1784
+  Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-4099554f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-9497fbe3
+Resources:
+  ArgusServicesApiEC2node01:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-97785bed
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "Argus01ServicesModelOrganizationApi-${EnvironmentName}"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            apiname=${APIName}
+            yum install -y httpd
+            /etc/init.d/httpd start
+            touch /var/www/html/index.html
+            echo "<b><center><h1>I am from $apiname!! [node01]" > /var/www/html/index.html
+            x=${EnvironmentName}
+            echo $x > /root/userdata.txt
+  ArgusServicesApiEC2node02:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-97785bed
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "Argus01ServicesModelOrganizationApi-${EnvironmentName}"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            apiname=${APIName}
+            yum install -y httpd
+            /etc/init.d/httpd start
+            touch /var/www/html/index.html
+            echo "<b><center><h1>I am from $apiname!!  [node02]" > /var/www/html/index.html
+            x=${EnvironmentName}
+            echo $x > /root/userdata.txt
+Outputs:
+  EC2node01URL:
+    Description: End point of first API
+    Value: !GetAtt ArgusServicesApiEC2node01.PublicDnsName
+  EC2node02URL:
+    Description: End point of first API
+    Value: !GetAtt ArgusServicesApiEC2node02.PublicDnsName
+  NODE01Output:
+    Description: Model API1 node01
+    Value: !Ref ArgusServicesApiEC2node01
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"
+  NODE02Output:
+    Description: Model API1 node01
+    Value: !Ref ArgusServicesApiEC2node02
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node02"

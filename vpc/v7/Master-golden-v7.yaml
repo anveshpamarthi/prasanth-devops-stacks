@@ -1,0 +1,197 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: testtest
+  ModuleName:
+    Type: String
+    Default: API
+  S3BucketName:
+    Type: String
+    Default: cfscripts-altus-as-2
+  S3Path:
+    Type: String
+    Default: "AS07"
+  EC2file:
+    Type: String
+    Default: "ec2instance.yaml" 
+  NLBfile:
+    Type: String
+    Default: "NLB-Internal.yaml"
+Resources:
+  ArgusServicesDataAccessRightsAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: DataAccessRights
+        ModuleName: API
+        PrivSubnet2: !Select [0, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesDataAccessRightsNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${NLBfile}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: DataAccessRights
+        VPC:
+         Fn::ImportValue:
+           Fn::Sub: '${EnvironmentName}-VPC'
+        PrivSubnet2:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PrivateSubnets2'
+    DependsOn: ArgusServicesDataAccessRightsAPI
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: ModelOrganization
+        ModuleName: API
+        PrivSubnet2: !Select [0, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesModelOrganizationNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${NLBfile}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+        VPC:
+         Fn::ImportValue:
+           Fn::Sub: '${EnvironmentName}-VPC'
+        PrivSubnet2:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PrivateSubnets2'
+    DependsOn: ArgusServicesModelOrganizationAPI
+  ArgusServicesProvisioningDataStoreAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: ProvisioningDataStore
+        ModuleName: API
+        PrivSubnet2: !Select [0, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesProvisioningDataStoreNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${NLBfile}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ProvisioningDataStore
+        VPC:
+         Fn::ImportValue:
+           Fn::Sub: '${EnvironmentName}-VPC'
+        PrivSubnet2:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PrivateSubnets2'
+    DependsOn: ArgusServicesProvisioningDataStoreAPI
+  ArgusServicesWorkspaceAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: Workspace
+        ModuleName: API
+        PrivSubnet2: !Select [0, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesWorkspaceNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${NLBfile}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Workspace
+        VPC:
+         Fn::ImportValue:
+           Fn::Sub: '${EnvironmentName}-VPC'
+        PrivSubnet2:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PrivateSubnets2'
+    DependsOn: ArgusServicesWorkspaceAPI
+  ArgusServicesWorkspaceReportingAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: WorkspaceReporting
+        ModuleName: API
+        PrivSubnet2: !Select [0, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesWorkspaceReportingNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${NLBfile}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkspaceReporting
+        VPC:
+         Fn::ImportValue:
+           Fn::Sub: '${EnvironmentName}-VPC'
+        PrivSubnet2:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PrivateSubnets2'
+    DependsOn: ArgusServicesWorkspaceReportingAPI
+  ArgusServicesWorkspaceCalculationHostAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: WorkspaceCalculationHost
+        ModuleName: WorkerRole
+        PrivSubnet2: !Select [1, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesAvuxSubmissionHostAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: AvuxSubmissionHost
+        ModuleName: WorkerRole
+        PrivSubnet2: !Select [1, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesAppEntitlementsHostAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: AppEntitlementsHost
+        ModuleName: WorkerRole
+        PrivSubnet2: !Select [1, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesUserEntitlementsHostAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: UserEntitlementsHost
+        ModuleName: WorkerRole
+        PrivSubnet2: !Select [1, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+Outputs:
+  ArgusServicesWorkspaceApi:
+    Description: End point name of Loadbalancer ArgusServicesWorkspaceApi
+    Value: !GetAtt ArgusServicesWorkspaceNLB.Outputs.IntLBDNSName
+  ArgusServicesModelOrganizationApi:
+    Description: End point name of Loadbalancer ArgusServicesModelOrganizationApi
+    Value: !GetAtt ArgusServicesModelOrganizationNLB.Outputs.IntLBDNSName
+  ArgusServicesDataAccessRightsApi:
+    Description: End point name of Loadbalancer ArgusServicesDataAccessRightsApi
+    Value: !GetAtt ArgusServicesDataAccessRightsNLB.Outputs.IntLBDNSName
+  ArgusServicesProvisionDataStoreApi:
+    Description: End point name of Loadbalancer ArgusServicesProvisionDataStoreApi
+    Value: !GetAtt ArgusServicesProvisioningDataStoreNLB.Outputs.IntLBDNSName
+  ArgusServicesWorkspaceReportingApi:
+    Description: End point name of Loadbalancer ArgusServicesWorkspaceReportingApi
+    Value: !GetAtt ArgusServicesWorkspaceReportingNLB.Outputs.IntLBDNSName

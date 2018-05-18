@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: POC1
+  ModuleName:
+    Type: String
+    Default: API
+  APIName:
+    Type: String
+    Default: WorkspaceCalculationHost
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PubSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+Resources:
+  ASEc2ASGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref PrivSubnet1
+        - !Ref PrivSubnet2 
+      LaunchConfigurationName: 
+        Fn::ImportValue: 
+          Fn::Sub: "${EnvironmentName}-${ModuleName}-Launchconfig"
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      TargetGroupARNs:
+        - Ref: NLB5APITargetGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "DemoVPC-${EnvironmentName}-${ModuleName}-${APIName}"
+        PropagateAtLaunch: true
+      - Key: Module
+        Value: !Ref ModuleName
+        PropagateAtLaunch: true
+      - Key: SubModule
+        Value: !Ref APIName
+        PropagateAtLaunch: true
+      - Key: Createdby
+        Value: "asteam"
+        PropagateAtLaunch: true
+      - Key: Platform
+        Value: "vanguard"
+        PropagateAtLaunch: true
+      - Key: Env
+        Value: "poc"
+        PropagateAtLaunch: true
+      - Key: Scope
+        Value: "as"
+        PropagateAtLaunch: true
+      - Key: Schedule
+        Value: "usa-office-hours"
+        PropagateAtLaunch: true
+  NLBAPIloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${APIName}-Autoscaling"
+      Type: network
+      Scheme: internal
+      Subnets:
+      - Ref: PrivSubnet1
+      - Ref: PrivSubnet2
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}-Autoscaling"
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+  NLBAPIListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBAPITargetGroup
+      LoadBalancerArn:
+        Ref: NLBAPIloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLB5APITargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckProtocol: TCP
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Name: !Sub "${APIName}"
+      Port: 80
+      Protocol: TCP
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}-AutoScaling"
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBAPIloadbalancer.DNSName

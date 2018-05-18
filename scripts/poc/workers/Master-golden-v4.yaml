@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: poc
+Resources:
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v3.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+Outputs:
+  LB01DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesModelOrganizationNLB.Outputs.ExtLBDNSName
+  LB02DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesProvisioningNLB.Outputs.ExtLBDNSName
+  LB03DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesWorkspaceNLB.Outputs.ExtLBDNSName
+  LB04DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesWorkspaceReportsNLB.Outputs.ExtLBDNSName
+  LB05DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesDataAccessRightsNLB.Outputs.ExtLBDNSName

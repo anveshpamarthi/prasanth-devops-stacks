@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: DemoTing
+  ModuleName:
+    Type: String
+    Default: WorkerRole
+Resources:
+  APILaunchconfig:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/launchconfig01.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: UserEntitlementsHost
+        ModuleName: API
+  API01:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/autoscalingDemo.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+        ModuleName: API
+    DependsOn: APILaunchconfig
+  API02:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/autoscalingDemo.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ProvisioningDataStore
+        ModuleName: API
+    DependsOn: APILaunchconfig
+  API03:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/autoscalingDemo.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Workspace
+        ModuleName: API
+    DependsOn: APILaunchconfig
+  API04:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/autoscalingDemo.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkspaceReporting
+        ModuleName: API
+    DependsOn: APILaunchconfig
+  API05:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/autoscalingDemo.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: DataAccessRights
+        ModuleName: API
+    DependsOn: APILaunchconfig
+Outputs:
+  LB01DNSName:
+    Description: End point name of Loadbalancer API-01
+    Value: !GetAtt API01.Outputs.ExtLBDNSName
+  LB02DNSName:
+    Description: End point name of Loadbalancer API-02
+    Value: !GetAtt API02.Outputs.ExtLBDNSName
+  LB03DNSName:
+    Description: End point name of Loadbalancer API-03
+    Value: !GetAtt API03.Outputs.ExtLBDNSName
+  LB04DNSName:
+    Description: End point name of Loadbalancer API-04
+    Value: !GetAtt API04.Outputs.ExtLBDNSName
+  LB05DNSName:
+    Description: End point name of Loadbalancer API-05
+    Value: !GetAtt API05.Outputs.ExtLBDNSName

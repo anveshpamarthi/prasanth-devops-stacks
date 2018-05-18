@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: poc
+  ModuleName:
+    Type: String
+    Default: WorkerRole
+  APIName:
+    Type: String
+    Default: Calc
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PubSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+  EC2ImageID:
+    Type: String
+    Default: ami-857745e0
+  ASEC2Key:
+    Type: String
+    Default: testing-apis
+  SQLServer:
+    Type: String
+    Default: "18.188.214.1"
+  REDISUrl:
+    Type: String
+    Default: "as-redis-test.9jwysu.ng.0001.use2.cache.amazonaws.com"
+Resources:
+  NLBDemoloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${APIName}"
+      Type: network
+      Scheme: internal
+      Subnets:
+      - Ref: PrivSubnet1
+      - Ref: PrivSubnet2
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}"
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+  NLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBDemoTargetGroup
+      LoadBalancerArn:
+        Ref: NLBDemoloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLBDemoTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckProtocol: TCP
+      Name: !Sub "${APIName}"
+      Port: 80
+      Protocol: TCP
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+  ASAPILaunchConfigPOC:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref EC2ImageID
+      SecurityGroups:
+      - Ref: MySecurityGroup
+      InstanceType: t2.medium
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          New-Item -Path c:\temp -ItemType "directory" -Force
+          powershell.exe -Command Read-S3Object -BucketName aws-codedeploy-us-east-2/latest -Key codedeploy-agent.msi -File c:\temp\codedeploy-agent.msi
+          Start-Process -Wait -FilePath c:\temp\codedeploy-agent.msi -WindowStyle Hidden
+          [Environment]::SetEnvironmentVariable("AWS:Region","us-east-2","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","${REDISUrl}","Machine")
+          </powershell>
+          <persist>true</persist>
+  ASApiAsgPOC:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref PrivSubnet1
+        - !Ref PrivSubnet2
+      LaunchConfigurationName: !Ref ASAPILaunchConfigPOC
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      TargetGroupARNs:
+        - Ref: NLBDemoTargetGroup
+      Tags:
+        - Key: Name
+          Value: ASLaunchConfignode
+          PropagateAtLaunch: true
+        - Key: Env
+          Value: Test
+          PropagateAtLaunch: true
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBDemoloadbalancer.DNSName

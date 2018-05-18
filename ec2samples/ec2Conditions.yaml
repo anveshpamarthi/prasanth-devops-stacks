@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  ModuleName:
+    Type: String
+    Default: API
+  APIName:
+    Type: String
+    Default: ModelOrganization
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PubSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+  EC2ImageID:
+    Type: String
+    Default: ami-976152f2
+  ASEC2Key:
+    Type: String
+    Default: testing-apis
+  SQLServer:
+    Type: String
+    Default: "18.188.214.1"
+Conditions:
+  CreateEC2ModelOrganization: !Equals [!Ref APIName, "ModelOrganization"]
+  CreateEC2Provisioning: !Equals [!Ref APIName, "Provisioning"]
+  CreateEC2Workspace: !Equals [!Ref APIName, "Workspace"]
+  CreateEC2WorkspaceReports: !Equals [!Ref APIName, "WorkspaceReports"]
+Resources:
+  Argus01ServicesModelOrganizationApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: !Ref ASEC2Key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref PubSubnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-node01"
+      - Key: Module
+        Value: !Ref ModuleName
+      - Key: SubModule
+        Value: !Ref APIName
+      - Key: Createdby
+        Value: "asteam"
+      - Key: Platform
+        Value: "vanguard"
+      - Key: Env
+        Value: "poc"
+      - Key: Scope
+        Value: "as"
+      - Key: Schedule
+        Value: "usa-office-hours"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            yum install -y httpd
+            /etc/init.d/httpd start
+            touch /var/www/html/index.html
+            echo "<b><center><h1>I am from node1-" > /var/www/html/index.html
+            echo ${EnvironmentName} >> /var/www/html/index.html
+            echo $x > /root/userdata.txt

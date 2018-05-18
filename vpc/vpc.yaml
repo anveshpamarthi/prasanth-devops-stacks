@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: DRAS
+  EnvironmentName:
+    Type: String
+    Default: DRAS
+  AZ1:
+    Type: String
+    Default: us-east-2a
+  AZ2:
+    Type: String
+    Default: us-east-2b
+  AZ3:
+    Type: String
+    Default: ''
+  AZ3:
+    Type: String
+    Default: ''
+Resources:
+  TestVPCDemo:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 20.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      InstanceTenancy: default
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-DemoVPC"
+      - Key: Createdby
+        Value: as
+  PubSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: TestVPCDemo
+      CidrBlock: 20.0.10.0/24
+      AvailabilityZone: "us-east-2a"
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-PublicSubnetA"
+  PubSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: TestVPCDemo
+      CidrBlock: 20.0.12.0/24
+      AvailabilityZone: "us-east-2b"
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-PublicSubnetB"
+  PrivSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: TestVPCDemo
+      CidrBlock: 20.0.11.0/24
+      AvailabilityZone: "us-east-2a"
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-PrivateSubnetA"
+  PrivSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: TestVPCDemo
+      CidrBlock: 20.0.13.0/24
+      AvailabilityZone: "us-east-2b"
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-PrivateSubnetB"
+  DemoInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-IGW" 
+  AttachDemoGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: TestVPCDemo
+      InternetGatewayId:
+        Ref: DemoInternetGateway
+  PubRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: TestVPCDemo
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-Public Network RTB"
+  PrivRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: TestVPCDemo
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-Private Network RTB"
+  PubASubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PubSubnetA
+      RouteTableId:
+        Ref: PubRoutingTable
+  PubBSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PubSubnetB
+      RouteTableId:
+        Ref: PubRoutingTable
+  PrivASubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivSubnetA
+      RouteTableId:
+        Ref: PrivRoutingTable
+  PrivBSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivSubnetB
+      RouteTableId:
+        Ref: PrivRoutingTable
+  AddingIGWRoutePubNet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: PubRoutingTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref DemoInternetGateway
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+#   DependsOn: AttachDemoGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+        - EIP
+        - AllocationId
+      SubnetId: !Ref PubSubnetA
+      Tags:
+        - Key: foo
+          Value: bar
+  EIP:
+    Type: AWS::EC2::EIP
+  NATRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivRoutingTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway
+Outputs:
+  VPCExport:
+    Description: Exporting VPC
+    Value: !Ref TestVPCDemo
+    Export:
+      Name: !Sub "${EnvironmentName}-VPC"
+  PublicSubA:
+    Description: Exporting Public SubnetA
+    Value: !Ref PubSubnetA
+    Export:
+      Name: !Sub "${EnvironmentName}-PubSubnetA"
+  PublicSubB:
+    Description: Exporting Public SubnetB
+    Value: !Ref PubSubnetB
+    Export:
+      Name: !Sub "${EnvironmentName}-PubSubnetB"
+  PrivSubnetA:
+    Description: Exporting Private SubnetA
+    Value: !Ref PrivSubnetA
+    Export:
+      Name: !Sub "${EnvironmentName}-PrivSubnetA"
+  PrivSubnetB:
+    Description: Exporting Private SubnetB
+    Value: !Ref PrivSubnetB
+    Export:
+      Name: !Sub "${EnvironmentName}-PrivSubnetB"
+  PrivSubnets:
+    Description: Exporting Private SubnetA
+    Value: !Join [ ",", [ !Ref PrivSubnetA, !Ref PrivSubnetB ]]
+    Export:
+      Name: !Sub "${EnvironmentName}-PrivSubnetAB"
+  PublSubnets:
+    Description: Exporting Private SubnetA
+    Value: !Join [ ",", [ !Ref PubSubnetA, !Ref PubSubnetB ]]
+    Export:
+      Name: !Sub "${EnvironmentName}-PubSubnetAB"

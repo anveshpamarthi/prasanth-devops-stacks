@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Demo
+Resources:
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+  ArgusServicesModelOrganizationNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/NLB-Internal-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+    DependsOn: ArgusServicesModelOrganizationAPI
+  ArgusServicesProvisioningAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ProvisioningDataStore
+  ArgusServicesProvisioningNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/NLB-Internal-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ProvisioningDataStore
+    DependsOn: ArgusServicesProvisioningAPI
+  ArgusServicesWorkspaceAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Workspace
+  ArgusServicesWorkspaceNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/NLB-Internal-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Workspace
+    DependsOn: ArgusServicesWorkspaceAPI
+  ArgusServicesWorkspaceReportsAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkspaceReporting
+  ArgusServicesWorkspaceReportsNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/NLB-Internal-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkspaceReporting
+    DependsOn: ArgusServicesWorkspaceReportsAPI
+  ArgusServicesDataAccessRightsAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: DataAccessRights
+  ArgusServicesDataAccessRightsNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/NLB-Internal-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: DataAccessRights
+    DependsOn: ArgusServicesDataAccessRightsAPI
+  ArgusServicesAvuxSubmissionHostAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: AvuxSubmissionHost
+        ModuleName: WorkerRole
+  ArgusServicesWorkspaceCalculationHostAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS06/ec2golden-v4.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkspaceCalculationHost
+        ModuleName: WorkerRole
+Outputs:
+  LB01DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesModelOrganizationNLB.Outputs.ExtLBDNSName
+  LB02DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesProvisioningNLB.Outputs.ExtLBDNSName
+  LB03DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesWorkspaceNLB.Outputs.ExtLBDNSName
+  LB04DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesWorkspaceReportsNLB.Outputs.ExtLBDNSName
+  LB05DNSName:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesDataAccessRightsNLB.Outputs.ExtLBDNSName
+  AvuxSubmissionHostEC2:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesAvuxSubmissionHostAPI.Outputs.EC2DNSName
+  WorkspaceCalculationHostEC2:
+    Description: End point name of Loadbalancer API01 ModelOrganization
+    Value: !GetAtt ArgusServicesWorkspaceCalculationHostAPI.Outputs.EC2DNSName

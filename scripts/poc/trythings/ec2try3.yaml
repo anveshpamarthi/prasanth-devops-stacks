@@ -1,0 +1,255 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  ModuleName:
+    Type: String
+    Default: API
+  APIName:
+    Type: String
+    Default: ModelOrganization
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PubSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+  EC2ImageID:
+    Type: String
+    Default: ami-857745e0
+  ASEC2Key:
+    Type: String
+    Default: testing-apis
+  SQLServer:
+    Type: String
+    Default: "18.188.214.1"
+  REDISUrl:
+    Type: String
+    Default: "as-redis-test.9jwysu.ng.0001.use2.cache.amazonaws.com"
+Conditions:
+  CreateEC2ModelOrganization: !Equals [!Ref APIName, "ModelOrganization"]
+  CreateEC2Provisioning: !Equals [!Ref APIName, "Provisioning"]
+  CreateEC2Workspace: !Equals [!Ref APIName, "Workspace"]
+  CreateEC2WorkspaceReports: !Equals [!Ref APIName, "WorkspaceReports"]
+Resources:
+  ASAPIModelOrg:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2ModelOrganization
+    Properties:
+      ImageId: !Ref EC2ImageID
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: !Ref PrivSubnet2
+      IamInstanceProfile: "ArgusServices-testS3"
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Module
+        Value: !Ref ModuleName
+      - Key: SubModule
+        Value: !Ref APIName
+      - Key: Createdby
+        Value: "asteam"
+      - Key: Platform
+        Value: "vanguard"
+      - Key: Env
+        Value: "poc"
+      - Key: Scope
+        Value: "as"
+      - Key: Schedule
+        Value: "usa-office-hours"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          New-Item -Path c:\temp -ItemType "directory" -Force
+          powershell.exe -Command Read-S3Object -BucketName aws-codedeploy-us-east-2/latest -Key codedeploy-agent.msi -File c:\temp\codedeploy-agent.msi
+          Start-Process -Wait -FilePath c:\temp\codedeploy-agent.msi -WindowStyle Hidden
+          [Environment]::SetEnvironmentVariable("AWS:AvuxSubmissionsQueue","astesting_AVUXSubmission","Machine")
+          [Environment]::SetEnvironmentVariable("AWS:Region","us-east-2","Machine")
+          [Environment]::SetEnvironmentVariable("AWS:SubmissionsStorageRoot","argusservices-dev/Submissions","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","${REDISUrl}","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","Data Source=${SQLServer};Initial Catalog=ProvisionDataStore;User Id=argussa2;password=Argus#750town;","Machine")
+          </powershell>
+          <persist>true</persist>
+  ASAPIProv:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2Provisioning
+    Properties:
+      ImageId: !Ref EC2ImageID
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: !Ref PrivSubnet2
+      IamInstanceProfile: "ArgusServices-testS3"
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Module
+        Value: !Ref ModuleName
+      - Key: SubModule
+        Value: !Ref APIName
+      - Key: Createdby
+        Value: "asteam"
+      - Key: Platform
+        Value: "vanguard"
+      - Key: Env
+        Value: "poc"
+      - Key: Scope
+        Value: "as"
+      - Key: Schedule
+        Value: "usa-office-hours"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          New-Item -Path c:\temp -ItemType "directory" -Force
+          powershell.exe -Command Read-S3Object -BucketName aws-codedeploy-us-east-2/latest -Key codedeploy-agent.msi -File c:\temp\codedeploy-agent.msi
+          Start-Process -Wait -FilePath c:\temp\codedeploy-agent.msi -WindowStyle Hidden
+          [Environment]::SetEnvironmentVariable("ADWDatabaseSettings:DatabaseScriptsLocation","scripts","Machine")
+          [Environment]::SetEnvironmentVariable("AWS:Region","us-east-2","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","${REDISUrl}","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","Data Source=${SQLServer};Initial Catalog=ProvisionDataStore;User Id=argussa2;password=Argus#750town;","Machine")
+          </powershell>
+          <persist>true</persist>
+  ASAPIWorkSpace:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2Workspace
+    Properties:
+      ImageId: !Ref EC2ImageID
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: !Ref PrivSubnet2
+      IamInstanceProfile: "ArgusServices-testS3"
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Module
+        Value: !Ref ModuleName
+      - Key: SubModule
+        Value: !Ref APIName
+      - Key: Createdby
+        Value: "asteam"
+      - Key: Platform
+        Value: "vanguard"
+      - Key: Env
+        Value: "poc"
+      - Key: Scope
+        Value: "as"
+      - Key: Schedule
+        Value: "usa-office-hours"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          New-Item -Path c:\temp -ItemType "directory" -Force
+          powershell.exe -Command Read-S3Object -BucketName aws-codedeploy-us-east-2/latest -Key codedeploy-agent.msi -File c:\temp\codedeploy-agent.msi
+          Start-Process -Wait -FilePath c:\temp\codedeploy-agent.msi -WindowStyle Hidden
+          [Environment]::SetEnvironmentVariable("AWS:ResultLineMetadataStorageRoot","argusservices-dev/MetaDataCache","Machine")
+          [Environment]::SetEnvironmentVariable("AWS:Region","us-east-2","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","${REDISUrl}","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","Data Source=${SQLServer};Initial Catalog=ProvisionDataStore;User Id=argussa2;password=Argus#750town;","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:ResultLineMetadataRedisConnectionString","${REDISUrl}","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:WorkspaceRedisConnectionString","${REDISUrl}","Machine")
+          [Environment]::SetEnvironmentVariable("ModelOrgPropertyApiUrl","https://apigatewayqa.altusplatform.com:8243/ASMO-dev/1.0.0/api/PropertyAssets","Machine")
+          </powershell>
+          <persist>true</persist>
+  ASAPIWorkSpaceReports:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2WorkspaceReports
+    Properties:
+      ImageId: !Ref EC2ImageID
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: !Ref PrivSubnet2
+      IamInstanceProfile: "ArgusServices-testS3"
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Module
+        Value: !Ref ModuleName
+      - Key: SubModule
+        Value: !Ref APIName
+      - Key: Createdby
+        Value: "asteam"
+      - Key: Platform
+        Value: "vanguard"
+      - Key: Env
+        Value: "poc"
+      - Key: Scope
+        Value: "as"
+      - Key: Schedule
+        Value: "usa-office-hours"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          New-Item -Path c:\temp -ItemType "directory" -Force
+          powershell.exe -Command Read-S3Object -BucketName aws-codedeploy-us-east-2/latest -Key codedeploy-agent.msi -File c:\temp\codedeploy-agent.msi
+          Start-Process -Wait -FilePath c:\temp\codedeploy-agent.msi -WindowStyle Hidden
+          [Environment]::SetEnvironmentVariable("AWS:Region","us-east-2","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","${REDISUrl}","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:WorkspaceRedisConnectionString","${REDISUrl}","Machine")
+          [Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","Data Source=${SQLServer};Initial Catalog=ProvisionDataStore;User Id=argussa2;password=Argus#750town;","Machine")
+          </powershell>
+          <persist>true</persist>
+Outputs:
+  EC2node01URL:
+    Condition: CreateEC2WorkspaceReports
+    Description: End point of first API
+    Value: !GetAtt ASAPIWorkSpaceReports.PrivateIp
+  EC2node01URL:
+    Condition: CreateEC2Workspace
+    Description: End point of first API
+    Value: !GetAtt ASAPIWorkSpace.PrivateIp
+  EC2node01URL:
+    Condition: CreateEC2Provisioning
+    Description: End point of first API
+    Value: !GetAtt ASAPIProv.PrivateIp
+  EC2node01URL:
+    Condition: CreateEC2ModelOrganization
+    Description: End point of first API
+    Value: !GetAtt ASAPIModelOrg.PrivateIp
+  NODE01Output:
+    Condition: CreateEC2WorkspaceReports
+    Description: Model API1 node01
+    Value: !Ref ASAPIWorkSpaceReports
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"
+  NODE02Output:
+    Condition: CreateEC2Workspace
+    Description: Model API1 node01
+    Value: !Ref ASAPIWorkSpace
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"
+  NODE03Output:
+    Condition: CreateEC2Provisioning
+    Description: Model API1 node01
+    Value: !Ref ASAPIProv
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"
+  NODE04Output:
+    Condition: CreateEC2ModelOrganization
+    Description: Model API1 node01
+    Value: !Ref ASAPIModelOrg
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"

@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  APIName:
+    Type: String
+    Default: ArgusServicesModelOrganizationApi
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-d9242194
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-dc91b7b7
+  EC2ImageID:
+    Type: String
+    Default: ami-cc7744a9
+  KeyName:
+    Type: String
+    Default: altus-test-key
+Resources:
+  ASAPInode01:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: !Ref KeyName
+      InstanceType: t2.micro
+      IamInstanceProfile: "ArgusServices-testS3"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Createdby
+        Value: asteam
+      - Key: Scope
+        Value: as
+      - Key: Platform
+        Value: vanguard
+Outputs:
+  EC2node01URL:
+    Description: End point of first API
+    Value: !GetAtt ASAPInode01.PublicDnsName
+  NODE01Output:
+    Description: Model API1 node01
+    Value: !Ref ASAPInode01
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"

@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+  APIName:
+    Type: String
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-d9242194
+Resources:
+  NLBDemoloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${APIName}"
+      Type: network
+      Subnets:
+      - Ref: Subnet1
+      - Ref: Subnet2
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}"
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+  NLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBDemoTargetGroup
+      LoadBalancerArn:
+        Ref: NLBDemoloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLBDemoTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckProtocol: HTTP
+      Name: !Sub "${APIName}"
+      Port: 80
+      Protocol: TCP
+      Targets:
+      - Id:
+          Fn::ImportValue: !Sub "${EnvironmentName}-${APIName}-ec2-node01"
+        Port: 80
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBDemoloadbalancer.DNSName

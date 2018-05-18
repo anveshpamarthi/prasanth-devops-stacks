@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  API1Name:
+    Type: String
+    Default: ArgusServicesModelOrganizationApi
+  API2Name:
+    Type: String
+    Default: ArgusServicesModelOrganizationApi
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-d9242194
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-dc91b7b7
+  EC2ImageID:
+    Type: String
+    Default: ami-d9ecdfbc
+  KeyName:
+    Type: String
+    Default: altus-test-key
+Resources:
+  Workernode01:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageID
+      InstanceType: t2.micro
+      IamInstanceProfile: "ArgusServices-testSQS-ElastiCache"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Environment
+        Value: !Sub ${API1Name}-${EnvironmentName}-Testing"
+      - Key: Name
+        Value: WorkerRoleCalc
+      - Key: Createdby
+        Value: "aseam"
+  Workernode02:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: !Ref KeyName
+      InstanceType: t2.micro
+      IamInstanceProfile: "ArgusServices-testSQS-ElastiCache"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet2
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Environment
+        Value: !Sub ${API2Name}-${EnvironmentName}-Testing"
+      - Key: Name
+        Value: WorkerRoleAuxSub
+      - Key: Createdby
+        Value: "aseam"
+Outputs:
+  EC2node01URL:
+    Description: End point for AuxSub workerRole
+    Value: !GetAtt Workernode01.PublicDnsName
+  EC2node02URL:
+    Description: End point for Calc Role
+    Value: !GetAtt Workernode02.PublicDnsName
+  NODE01Output:
+    Description: WorkerRole Calc end point
+    Value: !Ref Workernode01
+  NODE02Output:
+    Description: WorkerRole SubAux end point
+    Value: !Ref Workernode02

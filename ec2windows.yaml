@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  BastionInstanceType:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.micro
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-18048b63
+  Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-a819dde2
+  MySecurityGroup:
+    Type: String
+    Default: sg-be622dc8
+Resources:
+  ArgusServicesModelOrganizationApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-cab14db7
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet
+          GroupSet: 
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "ArgusServicesModelOrganizationApi-${EnvironmentName}"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          [Environment]::SetEnvironmentVariable("RED_String","http://remote.bababoomer.com")
+          </powershell>

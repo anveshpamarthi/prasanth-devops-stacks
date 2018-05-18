@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: DemoVPC
+  ModuleName:
+    Type: String
+    Default: API
+  APIName:
+    Type: String
+    Default: Workspace
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PubSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  PubSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-d9242194
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+  EC2ImageID:
+    Type: String
+    Default: ami-082e136d
+  ASEC2Key:
+    Type: String
+    Default: testing-apis
+  SQLServer:
+    Type: String
+    Default: "Data Source=192.168.11.183;Initial Catalog=ProvisionDataStore;User Id=argussa2;password=hFxUBhy3S8CFZBVX!;"
+  REDISUrl:
+    Type: String
+    Default: "as-redis-test.9jwysu.ng.0001.use2.cache.amazonaws.com"
+  AsS3Bucket:
+    Type: String
+    Default: "argusservices-test"
+  WSO2Url:
+    Type: String
+    Default: "https://apigatewayqa.altusplatform.com:8243/ASMO-ec2test/1.0.0/"
+  AvuxSqs:
+    Type: String
+    Default: "astesting_AVUXSubmission"
+  CalcSqs:
+    Type: String
+    Default: "astesting_WorkspaceCalc"
+  APIIamRole:
+    Type: String
+    Default: "ArgusServices-testS3"
+  WorkerIamRole:
+    Type: String
+    Default: "ArgusServices-testSQS-ElastiCache"
+  TokenKey:
+    Type: String
+    Default: "<RSAKeyValue><Modulus>1LMvpRfP2ohbx5+i+iFCCsHzyQldToRdiXDsgb7WAotueS/9IeMh6t75/TVwViqfEzmIZiPMFhvA/D2yCRXHtcmyFFB/SNXImNKLR6yndbvwLBxbkqdaroArs9VKI/fwdWn4vRLnMxdkQnFDIgXWTfTSDAw8t+lwCf5BHJ6cQAK/vRmXF0dBxOW+v4S8nrdiy+HAbBuCDP06DjVzbzo7D5m0b6HITiZLoIvF5gscKIZXiXCvpTjnfvDmOBzdO1bGdL4yUy4v50ph4KWuZzt3hZDcW8vHscyB+tn7jHEqZUR1MJ6/rFygsG4h2032nKsIkojDDnPql63VvgNmq5fNMQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>"
+Conditions:
+  CreateEC2API: !Equals [!Ref ModuleName, "API"]
+  CreateEC2WorkerRole: !Equals [!Ref ModuleName, "WorkerRole"]
+Resources:
+  ASApiEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageID
+      InstanceType: t2.medium
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: !Ref PrivSubnet2
+      IamInstanceProfile: !If [CreateEC2API, !Ref APIIamRole, !Ref WorkerIamRole]
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${ModuleName}-${APIName}"
+      - Key: Module
+        Value: !Ref ModuleName
+      - Key: SubModule
+        Value: !Ref APIName
+      - Key: Createdby
+        Value: "asteam"
+      - Key: Platform
+        Value: "vanguard"
+      - Key: Env
+        Value: "poc"
+      - Key: Scope
+        Value: "as"
+      - Key: Schedule
+        Value: "usa-office-hours"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          $submodule="${APIName}"
+          $DirPath="C:\$submodule"
+          $region="${AWS::Region}"
+          if (!(Test-Path -Path $DirPath))
+          {
+          New-Item -Path c:\$submodule -ItemType "directory" -Force
+          powershell.exe -Command Read-S3Object -BucketName cfscripts-altus-as -Key powershell/Installcodedeploy.ps1 -File c:\$submodule\Installcodedeploy.ps1 -Region $region
+          powershell.exe -Command Read-S3Object -BucketName cfscripts-altus-as -Key powershell/$submodule.ps1 -File c:\$submodule\$submodule.ps1 -Region $region
+          powershell.exe -file "c:\$submodule\Installcodedeploy.ps1"
+          powershell.exe -file "c:\$submodule\$submodule.ps1" -redisurl "${REDISUrl}" -sqlurl "${SQLServer}" -tokenkey "${TokenKey}" -awsregion "${AWS::Region}" -s3bucket "${AsS3Bucket}" -wso2 "${WSO2Url}" -CalcSqs "${CalcSqs}" -AvuxSqs "${AvuxSqs}"
+          if ($? -eq "True") { Write-Host "UserData execution is successful"} else { Write-Host "Some error occured in Userdata execution" }
+          }
+          else
+          {
+          Write-Host "Userdata seem to be already executed on this host"
+          }
+          </powershell>
+          <persist>true</persist>
+Outputs:
+  EC2DNSName:
+    Description: End point of AS API EC2
+    Value: !GetAtt ASApiEC2Instance.PrivateDnsName
+  EC2APINODEOutput:
+    Description: API EC2 Exportname for LoadBalancer
+    Value: !Ref ASApiEC2Instance
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"

@@ -1,0 +1,139 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-ffea1784
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-4099554f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-5c999f73
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  BastionInstanceType:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.micro
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-9497fbe3
+Resources:
+  NLBDemoloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: NLB01
+      Type: network
+      Subnets:
+      - Ref: Subnet1
+      - Ref: Subnet2
+      Tags:
+      - Key: Name
+        Value: API1
+      - Key: Env
+        Value: Demo
+  NLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBDemoTargetGroup
+      LoadBalancerArn:
+        Ref: NLBDemoloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLBDemoTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: TCP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3 
+      Name: TG01
+      Port: 80
+      Protocol: TCP
+      Targets:
+      - Id:
+          Ref: Argus01ServicesModelOrganizationApi
+        Port: 80
+      - Id: 
+          Ref: Argus02ServicesModelOrganizationApi
+        Port: 80 
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '20'
+      UnhealthyThresholdCount: 3
+      VpcId:
+        Ref: VPC
+  Argus01ServicesModelOrganizationApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-97785bed
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "Argus01ServicesModelOrganizationApi-${EnvironmentName}"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            yum install -y httpd
+            /etc/init.d/httpd start
+            touch /var/www/html/index.html
+            echo "<b><center><h1>I am from node1" > /var/www/html/index.html
+            x=${EnvironmentName}
+            echo $x > /root/userdata.txt
+  Argus02ServicesModelOrganizationApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-97785bed
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet2
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "Argus02ServicesModelOrganizationApi-${EnvironmentName}"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            yum install -y httpd
+            /etc/init.d/httpd start
+            touch /var/www/html/index.html
+            echo "<b><center><h1>I am from node2" > /var/www/html/index.html
+            x=${EnvironmentName}
+            echo $x > /root/userdata.txt
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBDemoloadbalancer.DNSName
+  End1Point:
+    Description: End point of first API
+    Value: !GetAtt Argus01ServicesModelOrganizationApi.PublicDnsName
+  End2Point:
+    Description: End point of second API
+    Value: !Ref Argus02ServicesModelOrganizationApi
+  Modelapinode01:
+    Description: ModelAPI node01
+    Value: !Ref Argus01ServicesModelOrganizationApi
+    Export:
+      Name: node01api
+  Modelapinode02:
+    Description: ModelAPI node02
+    Value: !Ref Argus02ServicesModelOrganizationApi
+    Export:
+      Name: node02api

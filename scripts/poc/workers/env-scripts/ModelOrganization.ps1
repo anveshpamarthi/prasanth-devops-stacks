@@ -1,0 +1,7 @@
+param([string]$redisurl = "red", [string]$sqlurl = "sql", [string]$tokenkey = "tokenkey", [string]$awsregion = "ohio", [string]$s3bucket = "argus-dev", [string]$wso2 = "http://wso2", [string]$CalcSqs = "calc", [string]$AvuxSqs = "avux")
+[Environment]::SetEnvironmentVariable("AWS:AvuxSubmissionsQueue","$AvuxSqs","Machine")
+[Environment]::SetEnvironmentVariable("AWS:Region","$awsregion","Machine")
+[Environment]::SetEnvironmentVariable("AWS:SubmissionsStorageRoot","$s3bucket/Submissions","Machine")
+[Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","$redisurl","Machine")
+[Environment]::SetEnvironmentVariable("Tokens:Key","$tokenkey","Machine")
+[Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","$sqlurl","Machine")

@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  APIName:
+    Type: String
+    Default: WorkspaceReports
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-d9242194
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-dc91b7b7
+  EC2ImageID:
+    Type: String
+    Default: ami-011d2d64
+  KeyName:
+    Type: String
+    Default: altus-test-key
+Conditions:
+  CreateEC2ModelOrganization: !Equals [!Ref APIName, "ModelOrganization"]
+  CreateEC2Provisioning: !Equals [!Ref APIName, "Provisioning"]
+  CreateEC2Workspace: !Equals [!Ref APIName, "Workspace"]
+  CreateEC2WorkspaceReports: !Equals [!Ref APIName, "WorkspaceReports"]
+Resources:
+  ASAPIModelOrg:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2ModelOrganization
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: !Ref KeyName
+      InstanceType: t2.micro
+      IamInstanceProfile: "ArgusServices-testS3"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Createdby
+        Value: "asteam"
+      UserData:
+        Fn::Base64:
+          !Sub |
+          <powershell>
+          # Invoke function(s).
+          1..10 | % { [Environment]::SetEnvironmentVariable("AWS:SubmissionsStorageRoot","argusservices-dev/Submissions","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","arguservices-001.bkh5z8.0001.use1.cache.amazonaws.com","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","Data Source=52.201.245.228;Initial Catalog=ProvisionDataStore;User Id=argussa2;password=Argus#750tow
+n;","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("Tokens:Key","<RSAKeyValue><Modulus>1LMvpRfP2ohbx5+i+iFCCsHzyQldToRdiXDsgb7WAotueS/9IeMh6t75/TVwViqfEzmIZiPMFhvA/D2yCRXHtcmyFFB/SNXImNKLR6yndbvwLBx
+bkqdaroArs9VKI/fwdWn4vRLnMxdkQnFDIgXWTfTSDAw8t+lwCf5BHJ6cQAK/vRmXF0dBxOW+v4S8nrdiy+HAbBuCDP06DjVzbzo7D5m0b6HITiZLoIvF5gscKIZXiXCvpTjnfvDmOBzdO1bGdL4yUy4v50ph4KWuZzt3hZDcW8vHscyB+tn7jHEqZUR1MJ6/rFygsG4h2032nK
+sIkojDDnPql63VvgNmq5fNMQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>","Machine") }
+          Start-Sleep -Seconds 5
+          </powershell>
+  ASAPIProv:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2Provisioning
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: !Ref KeyName
+      InstanceType: t2.micro
+      IamInstanceProfile: "ArgusServices-testS3"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Createdby
+        Value: "aseam"
+  ASAPIWorkSpace:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2Workspace
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: !Ref KeyName
+      InstanceType: t2.micro
+      IamInstanceProfile: "ArgusServices-testS3"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Createdby
+        Value: "asteam"
+  ASAPIWorkSpaceReports:
+    Type: AWS::EC2::Instance
+    Condition: CreateEC2WorkspaceReports
+    Properties:
+      ImageId: !Ref EC2ImageID
+      KeyName: !Ref KeyName
+      InstanceType: t2.micro
+      IamInstanceProfile: "ArgusServices-testS3"
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "${APIName}-${EnvironmentName}-node01"
+      - Key: Createdby
+        Value: "aseam"
+Outputs:
+  EC2node01URL:
+    Condition: CreateEC2WorkspaceReports
+    Description: End point of first API
+    Value: !GetAtt ASAPIWorkSpaceReports.PublicDnsName
+  NODE01Output:
+    Condition: CreateEC2WorkspaceReports
+    Description: Model API1 node01
+    Value: !Ref ASAPIWorkSpaceReports
+    Export:
+      Name: !Sub "${EnvironmentName}-${APIName}-ec2-node01"

@@ -1,0 +1,28 @@
+Resources:
+  Argus01ServicesModelOrganizationApi:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: /index.html
+      HealthCheckPort: 80
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 4
+      Name: TGARGUSModelAPI
+      Port: 80
+      Protocol: HTTP
+      Tags:
+      - Key: Name
+        value: TGARGUSModelAPI
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '20'
+      TargetType: String
+      UnhealthyThresholdCount: 3
+      VpcId: vpc-ffea1784
+      Tag:
+      - Key: Name
+        Value: ArgusServicesModelAPI
+      - Key: Env
+        Value: Test
+

@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvName:
+    Type: String
+    Default: DRASCalc-Queue
+  S3BucketName:
+    Type: String
+    Default: cfscripts-altus-as
+Resources:
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/AS06/awssqs.yaml"
+      Parameters:
+        SqSName: !Sub ${EnvName}

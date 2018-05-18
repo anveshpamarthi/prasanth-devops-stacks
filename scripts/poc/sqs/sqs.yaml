@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: testtest
+  ModuleName:
+    Type: String
+    Default: API
+  APIName:
+    Type: String
+    Default: WorkspaceCalculationHost
+Resources:
+  SQSAVUXSubmission:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      QueueName: !Sub "argusservices-${EnvironmentName}_AVUXSubmission"
+  SQSWorkspaceCalc:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      QueueName: !Sub "argusservices-${EnvironmentName}_WorkspaceCalc"
+Outputs:
+  AVUXSubmissionName:
+    Description: "Name of AVUXSubmission Queue"
+    Value: !Ref SQSAVUXSubmission
+  WorkspaceCalcName:
+    Description: "Name of Workspace Queue"
+    Value: !Ref SQSWorkspaceCalc

@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+  APIName:
+    Type: String
+    Default: ModelOrg
+Resources:
+  AurgusServicesModelOrgEC2nodes:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/cf-stacks-demo/scripts/try02/ec2try01.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: !Sub ${APIName}
+  AurgusServicesModelOrgNetLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/cf-stacks-demo/scripts/try02/NLB-All-Internetfacing.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: !Sub ${APIName}
+    DependsOn: AurgusServicesModelOrgEC2nodes
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt AurgusServicesModelOrgNetLB.Outputs.ExtLBDNSName

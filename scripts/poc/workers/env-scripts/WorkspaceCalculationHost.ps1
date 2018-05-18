@@ -1,0 +1,7 @@
+param([string]$redisurl = "red", [string]$sqlurl = "sql", [string]$tokenkey = "tokenkey", [string]$awsregion = "ohio", [string]$s3bucket = "argus-dev", [string]$wso2 = "http://wso2", [string]$CalcSqs = "calc", [string]$AvuxSqs = "avux")
+[Environment]::SetEnvironmentVariable("AWSRegion","$awsregion","Machine")
+[Environment]::SetEnvironmentVariable("WorkspaceCalcQueueName","$CalcSqs","Machine")
+[Environment]::SetEnvironmentVariable("DataStoreRedisConnectionString","$redisurl","Machine")
+[Environment]::SetEnvironmentVariable("WorkspaceRedisConnectionString","$redisurl","Machine")
+[Environment]::SetEnvironmentVariable("Tokens.Key","$tokenkey","Machine")
+[Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","$sqlurl","Machine")

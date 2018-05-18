@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  APIName:
+    Type: String
+    Default: TestNLB
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+Resources:
+  NLBAPIloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${APIName}"
+      Type: network
+      Scheme: internal
+      Subnets:
+      - Ref: PrivSubnet1
+      - Ref: PrivSubnet2
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}"
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+  NLBAPIListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBAPITargetGroup
+      LoadBalancerArn:
+        Ref: NLBAPIloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLBAPITargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckProtocol: TCP
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Name: !Sub "${APIName}"
+      Port: 80
+      Protocol: TCP
+      Targets:
+      - Id:
+          Fn::ImportValue: !Sub "${EnvironmentName}-${APIName}-ec2-node01"
+        Port: 80
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBAPIloadbalancer.DNSName

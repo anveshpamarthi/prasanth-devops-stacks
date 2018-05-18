@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  BastionInstanceType:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.micro
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-ffea1784
+  Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-4099554f
+  MySecurityGroup:
+    Type: String
+    Default: sg-9497fbe3
+  API1ipaddress:
+    Type: String
+    Default: 10.10.3.100
+  API2ipaddress:
+    Type: String
+    Default: 10.10.3.101
+Resources:
+  ArgusServicesModelOrganizationApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-cab14db7
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet
+          PrivateIpAddress: !Ref API1ipaddress
+          GroupSet: 
+            - !Ref MySecurityGroup
+      Tags:
+        - Key: Name
+          Value: Jenkins-master
+      UserData:
+        Fn::Base64:
+          !Sub |
+          <powershell>
+          # Invoke function(s).
+          1..10 | % { [Environment]::SetEnvironmentVariable("AWS:SubmissionsStorageRoot","argusservices-dev/Submissions","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","arguservices-001.bkh5z8.0001.use1.cache.amazonaws.com","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","Data Source=52.201.245.228;Initial Catalog=ProvisionDataStore;User Id=argussa2;password=Argus#750town;","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("Tokens:Key","<RSAKeyValue><Modulus>1LMvpRfP2ohbx5+i+iFCCsHzyQldToRdiXDsgb7WAotueS/9IeMh6t75/TVwViqfEzmIZiPMFhvA/D2yCRXHtcmyFFB/SNXImNKLR6yndbvwLBxbkqdaroArs9VKI/fwdWn4vRLnMxdkQnFDIgXWTfTSDAw8t+lwCf5BHJ6cQAK/vRmXF0dBxOW+v4S8nrdiy+HAbBuCDP06DjVzbzo7D5m0b6HITiZLoIvF5gscKIZXiXCvpTjnfvDmOBzdO1bGdL4yUy4v50ph4KWuZzt3hZDcW8vHscyB+tn7jHEqZUR1MJ6/rFygsG4h2032nKsIkojDDnPql63VvgNmq5fNMQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>","Machine") }
+          Start-Sleep -Seconds 5
+          </powershell> 
+
+  ArgusServicesModelComponentsApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-cab14db7
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet
+          PrivateIpAddress: !Ref API2ipaddress
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+        - Key: Name
+          Value: Jenkins-slave
+      UserData:
+        Fn::Base64:
+          !Sub |
+          <powershell>
+          # Invoke function(s).
+          1..10 | % { [Environment]::SetEnvironmentVariable("AWS:SubmissionsStorageRoot","argusservices-dev/Submissions","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("ConnectionStrings:DataStoreRedisConnectionString","arguservices-001.bkh5z8.0001.use1.cache.amazonaws.com","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("ConnectionStrings:ProvisionDataStoreContext","Data Source=52.201.245.228;Initial Catalog=ProvisionDataStore;User Id=argussa2;password=Argus#750town;","Machine") }
+          1..10 | % { [Environment]::SetEnvironmentVariable("Tokens:Key","<RSAKeyValue><Modulus>1LMvpRfP2ohbx5+i+iFCCsHzyQldToRdiXDsgb7WAotueS/9IeMh6t75/TVwViqfEzmIZiPMFhvA/D2yCRXHtcmyFFB/SNXImNKLR6yndbvwLBxbkqdaroArs9VKI/fwdWn4vRLnMxdkQnFDIgXWTfTSDAw8t+lwCf5BHJ6cQAK/vRmXF0dBxOW+v4S8nrdiy+HAbBuCDP06DjVzbzo7D5m0b6HITiZLoIvF5gscKIZXiXCvpTjnfvDmOBzdO1bGdL4yUy4v50ph4KWuZzt3hZDcW8vHscyB+tn7jHEqZUR1MJ6/rFygsG4h2032nKsIkojDDnPql63VvgNmq5fNMQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>","Machine") }
+          Start-Sleep -Seconds 5
+          </powershell>

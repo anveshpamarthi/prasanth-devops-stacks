@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: POC1
+  ModuleName:
+    Type: String
+    Default: API
+  APIName:
+    Type: String
+    Default: WorkspaceCalculationHost
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-7aec6412
+  PubSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f862a782
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-6298952f
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-86fb80ed
+  EC2ImageID:
+    Type: String
+    Default: ami-857745e0
+  ASEC2Key:
+    Type: String
+    Default: testing-apis
+  SQLServer:
+    Type: String
+    Default: "18.188.214.1"
+  REDISUrl:
+    Type: String
+    Default: "as-redis-test.9jwysu.ng.0001.use2.cache.amazonaws.com"
+  TokenKey:
+    Type: String
+    Default: "<RSAKeyValue><Modulus>1LMvpRfP2ohbx5+i+iFCCsHzyQldToRdiXDsgb7WAotueS/9IeMh6t75/TVwViqfEzmIZiPMFhvA/D2yCRXHtcmyFFB/SNXImNKLR6yndbvwLBxbkqdaroArs9VKI/fwdWn4vRLnMxdkQnFDIgXWTfTSDAw8t+lwCf5BHJ6cQAK/vRmXF
+0dBxOW+v4S8nrdiy+HAbBuCDP06DjVzbzo7D5m0b6HITiZLoIvF5gscKIZXiXCvpTjnfvDmOBzdO1bGdL4yUy4v50ph4KWuZzt3hZDcW8vHscyB+tn7jHEqZUR1MJ6/rFygsG4h2032nKsIkojDDnPql63VvgNmq5fNMQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyVal
+ue>"
+Resources:
+  ASEC2LaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref EC2ImageID
+      SecurityGroups:
+      - Ref: MySecurityGroup
+      InstanceType: t2.medium
+      IamInstanceProfile: "ArgusServices-testS3"
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          $submodule="${APIName}"
+          New-Item -Path c:\$submodule -ItemType "directory" -Force
+          powershell.exe -Command Read-S3Object -BucketName cfscripts-altus-as -Key powershell/Installcodedeploy.ps1 -File c:\$submodule\Installcodedeploy.ps1
+          powershell.exe -Command Read-S3Object -BucketName cfscripts-altus-as -Key powershell/$submodule.ps1 -File c:\$submodule\$submodule.ps1
+          powershell.exe -file "c:\$submodule\Installcodedeploy.ps1"
+          powershell.exe -file "c:\$submodule\$submodule.ps1" -redisurl "${REDISUrl}" -sqlurl "${SQLServer}" -tokenkey "${TokenKey}" -awsregion "${AWS::Region}"
+          </powershell>
+          <persist>true</persist>
+  ASEc2ASGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref PrivSubnet1
+        - !Ref PrivSubnet2 
+      LaunchConfigurationName: !Ref ASEC2LaunchConfig
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      TargetGroupARNs:
+        - Ref: NLBAPITargetGroup
+      Tags:
+      - Key: Name
+        Value: !Sub "DemoVPC-${EnvironmentName}-${ModuleName}-${APIName}"
+        PropagateAtLaunch: true
+      - Key: Module
+        Value: !Ref ModuleName
+        PropagateAtLaunch: true
+      - Key: SubModule
+        Value: !Ref APIName
+        PropagateAtLaunch: true
+      - Key: Createdby
+        Value: "asteam"
+        PropagateAtLaunch: true
+      - Key: Platform
+        Value: "vanguard"
+        PropagateAtLaunch: true
+      - Key: Env
+        Value: "poc"
+        PropagateAtLaunch: true
+      - Key: Scope
+        Value: "as"
+        PropagateAtLaunch: true
+      - Key: Schedule
+        Value: "usa-office-hours"
+        PropagateAtLaunch: true
+  NLBAPIloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${APIName}"
+      Type: network
+      Scheme: internal
+      Subnets:
+      - Ref: PrivSubnet1
+      - Ref: PrivSubnet2
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}"
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+  NLBAPIListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBAPITargetGroup
+      LoadBalancerArn:
+        Ref: NLBAPIloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLBAPITargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckProtocol: TCP
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Name: !Sub "${APIName}"
+      Port: 80
+      Protocol: TCP
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBAPIloadbalancer.DNSName

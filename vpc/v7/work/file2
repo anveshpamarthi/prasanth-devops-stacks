@@ -1,0 +1,24 @@
+  ArgusServicesXYZAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${EC2file}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        S3BucketName: !Sub ${S3BucketName}
+        APIName: XYZ
+        ModuleName: API
+        PrivSubnet2: !Select [0, !Split [",", !ImportValue testtest-PrivateSubnets2]]
+  ArgusServicesXYZNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/${S3Path}/${NLBfile}"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: XYZ
+        VPC:
+         Fn::ImportValue:
+           Fn::Sub: '${EnvironmentName}-VPC'
+        PrivSubnet2:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PrivateSubnets2'
+    DependsOn: ArgusServicesXYZAPI

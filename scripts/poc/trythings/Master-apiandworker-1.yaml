@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Dev
+Resources:
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/ec2singlenodes.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+  ArgusServicesModelOrganizationNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/NLB-External-1.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+    DependsOn: ArgusServicesModelOrganizationAPI
+  ArgusServicesProvisioningAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/ec2singlenodes.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Provisioning
+  ArgusServicesProvisioningNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/NLB-External-1.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Provisioning
+    DependsOn: ArgusServicesProvisioningAPI
+  ArgusServicesWorkspaceAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/ec2singlenodes.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Workspace
+  ArgusServicesWorkspaceNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/NLB-External-1.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: Workspace
+    DependsOn: ArgusServicesWorkspaceAPI
+  ArgusServicesWorkspaceReportsAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/ec2singlenodes.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkspaceReports
+  ArgusServicesWorkspaceReportsNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/NLB-External-1.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkspaceReports
+    DependsOn: ArgusServicesWorkspaceReportsAPI
+  WorkerRolesEC2:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS02/worker-role-ec2.yaml"
+      Parameters:
+        EnvironmentName: WorkerRoles
+        API1Name: AvSubmission
+        API2Name: Calc
+Outputs:
+  ExtLB01DNSName:
+    Description: End point name of Loadbalancer API01
+    Value: !GetAtt ArgusServicesModelOrganizationNLB.Outputs.ExtLBDNSName
+  ExtLB02DNSName:
+    Description: End point name of Loadbalancer API02
+    Value: !GetAtt ArgusServicesProvisioningNLB.Outputs.ExtLBDNSName
+  ExtLB03DNSName:
+    Description: End point name of Loadbalancer API03
+    Value: !GetAtt ArgusServicesWorkspaceNLB.Outputs.ExtLBDNSName
+  ExtLBD04NSName:
+    Description: End point name of Loadbalancer API04
+    Value: !GetAtt ArgusServicesWorkspaceReportsNLB.Outputs.ExtLBDNSName
+  WorkerRoleSubmissionEndpoint:
+    Description: End point name of Worker Role Submission
+    Value: !GetAtt WorkerRolesEC2.Outputs.EC2node01URL
+  WorkerRole2CalcEndpoint:
+    Value: !GetAtt WorkerRolesEC2.Outputs.EC2node02URL

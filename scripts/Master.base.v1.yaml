@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  AurgusServicesEC2ModelAPIs:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/cf-stacks-demo/scripts/ec2try01.yaml"
+      Parameters:
+        EnvironmentName: QA
+  ExternalLoadBalancerAPI01:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/cf-stacks-demo/scripts/NLB-All-Internetfacing.yaml"
+    DependsOn: AurgusServicesEC2ModelAPIs

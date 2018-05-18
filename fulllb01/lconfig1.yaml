@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-9497fbe3
+Resources:
+ SimpleConfigi10:
+  Type: AWS::AutoScaling::LaunchConfiguration
+  Properties:
+    ImageId: ami-97785bed
+    SecurityGroups:
+    - Ref: MySecurityGroup
+    InstanceType: t2.micro
+    UserData:
+      Fn::Base64:
+        !Sub |
+           #!/bin/bash -xe
+           yum install -y httpd
+           /etc/init.d/httpd start
+           touch /var/www/html/index.html
+           echo "<b><center><h1>I am from node007!!" > /var/www/html/index.html
+ MyServerGroup:
+  Type: AWS::AutoScaling::AutoScalingGroup
+  Properties:
+    VPCZoneIdentifier:
+      - subnet-5c999f73
+      - subnet-2d955922 
+    LaunchConfigurationName: !Ref SimpleConfigi10
+    MinSize: '1'
+    MaxSize: '1'
+    DesiredCapacity: '1'
+    Tags:
+      - Key: Name
+        Value: ASLaunchConfignode
+        PropagateAtLaunch: true
+      - Key: Env
+        Value: Test
+        PropagateAtLaunch: true

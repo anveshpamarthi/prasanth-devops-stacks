@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: DemoVPC
+  ModuleName:
+    Type: String
+    Default: WorkerRole
+  APIName:
+    Type: String
+    Default: WorkspaceCalculationHost
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  PrivSubnet2:
+    Type: List<AWS::EC2::Subnet::Id>
+Resources:
+  NLBAPIloadbalancerCS:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${APIName}-CS"
+      Type: network
+      Scheme: internal
+      Subnets: !Ref PrivSubnet2
+      Tags:
+      - Key: Name
+        Value: !Sub "${EnvironmentName}-${APIName}"
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+  NLBAPIListenerCS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBAPITargetGroupCS
+      LoadBalancerArn:
+        Ref: NLBAPIloadbalancerCS
+      Port: '80'
+      Protocol: TCP
+  NLBAPITargetGroupCS:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckProtocol: TCP
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Name: !Sub "${EnvironmentName}-${APIName}"
+      Port: 80
+      Protocol: TCP
+      Targets:
+      - Id:
+          Fn::ImportValue: !Sub "${EnvironmentName}-${APIName}-ec2-node01"
+        Port: 80
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+Outputs:
+  IntLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBAPIloadbalancerCS.DNSName

@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-ffea1784
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-4099554f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-5c999f73
+Resources:
+  NLBDemoloadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: NLB01
+      Type: network
+      Subnets:
+      - Ref: Subnet1
+      - Ref: Subnet2
+      Tags:
+      - Key: Name
+        Value: API1
+      - Key: Env
+        Value: Demo
+  NLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: NLBDemoTargetGroup
+      LoadBalancerArn:
+        Ref: NLBDemoloadbalancer
+      Port: '80'
+      Protocol: TCP
+  NLBDemoTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: TCP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3 
+      Name: TG01
+      Port: 80
+      Protocol: TCP
+      Targets:
+      - Id:
+          Fn::ImportValue: "node01api"
+        Port: 80
+      - Id:
+          Fn::ImportValue: "node02api"
+        Port: 80
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '20'
+      UnhealthyThresholdCount: 3
+      VpcId:
+        Ref: VPC
+Outputs:
+  ExtLBDNSName:
+    Description: End point name of Loadbalancer
+    Value: !GetAtt NLBDemoloadbalancer.DNSName

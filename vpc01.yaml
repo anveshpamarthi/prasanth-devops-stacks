@@ -8,8 +8,8 @@ Resources:
       EnableDnsHostnames: 'true'
       InstanceTenancy: default
       Tags:
-      - Key: Env
-        Value: Test
+      - Key: Name
+        Value: BABAVPC
   publicnet01:
     Type: AWS::EC2::Subnet
     Properties:
@@ -82,14 +82,44 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId:
         Ref: BABAInternetGateway
-  TestInstance:
-    Type: "AWS::EC2::Instance"
+  WebsecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      ImageId: 'ami-97785bed'
-      KeyName: 'pranee-key'
-      NetworkInterfaces:
-        - AssociatePublicIpAddress: "true"
-          DeviceIndex: "0"
-          GroupSet:
-            - Ref: "myVPCEC2SecurityGroup"
-          SubnetId:
+      GroupDescription: Allow http to client host
+      VpcId:
+        Ref: BABAVPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      Tags:
+      - Key: Name
+        Value: WebsecurityGroup
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-97785bed
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      SubnetId: !Ref publicnet01
+      SecurityGroupIds:
+        - !GetAtt WebsecurityGroup.GroupId
+      Tags:
+      - Key: Name
+        Value: CFDemoEC2

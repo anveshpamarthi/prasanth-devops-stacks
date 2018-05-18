@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-ffea1784
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-a09f53af
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-f00a2acf
+Resources:
+  loadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: NLB01
+      Scheme: internal
+      Type: network
+      Subnets:
+      - Ref: Subnet1
+      - Ref: Subnet2
+      Tags:
+      - Key: key
+        Value: value
+      - Key: key2
+        Value: value2

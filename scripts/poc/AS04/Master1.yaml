@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: UAT
+Resources:
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS03/NLB-External-Try01.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+  ArgusServicesWorkerReportsAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.us-east-2.amazonaws.com/cfscripts-altus-as/AS03/NLB-External-Try01.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: WorkerReports
+Outputs:
+  ExtLB01DNSName:
+    Description: End point name of Loadbalancer API01
+    Value: !GetAtt ArgusServicesModelOrganizationAPI.Outputs.ExtLBDNSName
+  ExtLB02DNSName:
+    Description: End point name of Loadbalancer API02
+    Value: !GetAtt ArgusServicesWorkerReportsAPI.Outputs.ExtLBDNSName

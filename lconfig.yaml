@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-ffea1784
+  EC2id:
+    Type: String
+    Default: ami-97785bed
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-9497fbe3
+Resources:
+ ContainerInstances:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref EC2id
+      SecurityGroups: 
+        - MySecurityGroup
+      InstanceType: t2.micro
+      KeyName: pranee-key
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            yum install -y httpd
+            /etc/init.d/httpd start
+            touch /var/www/html/index.html
+            echo "<b><center><h1>I am from node007!!" > /var/www/html/index.html

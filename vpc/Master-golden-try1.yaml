@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: DRAS
+  ModuleName:
+    Type: String
+    Default: API
+  S3BucketName:
+    Type: String
+    Default: cfscripts-altus-as
+Resources:
+  ArgusServicesModelOrganizationAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/AS06/ec2golden-try.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+        ModuleName: API
+        PrivSubnet2:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PrivSubnetA'
+  ArgusServicesModelOrganizationNLB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${S3BucketName}/AS06/NLB-External-try.yaml"
+      Parameters:
+        EnvironmentName: !Sub ${EnvironmentName}
+        APIName: ModelOrganization
+        VPC:
+         Fn::ImportValue:
+           Fn::Sub: '${EnvironmentName}-VPC'
+        SubnetsPubAB:
+          Fn::ImportValue:
+            Fn::Sub: '${EnvironmentName}-PubSubnetAB'
+    DependsOn: ArgusServicesModelOrganizationAPI
+Outputs:
+  ArgusServicesModelOrganizationApi:
+    Description: End point name of Loadbalancer ArgusServicesModelOrganizationApi
+    Value: !GetAtt ArgusServicesModelOrganizationNLB.Outputs.ExtLBDNSName

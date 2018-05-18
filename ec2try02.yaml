@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+  EnvironmentName:
+    Type: String
+    Default: Dev
+  APIName:
+    Type: String
+    Default: ArgusServicesModelOrganizationApi
+  EC2Type:
+    Type: String
+    Description: EC2 instance type for Bastion
+    Default: t2.medium
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-7709841f
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-d9242194
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-dc91b7b7
+  EC2ImageID:
+    Type: String
+    Default: ami-25615740
+  KeyName:
+    Type: String
+    Default: pranee-key
+Conditions: 
+  CreateRed: !Equals [ !Ref EnvironmentName, Red ]
+  CreateBlue: !Equals [ !Ref EnvironmentName, Blue ]
+Resources:
+  ArgusServicesModelOrganizationApi:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-97785bed
+      KeyName: pranee-key
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet1
+          GroupSet: 
+            - !Ref MySecurityGroup
+      Tags:
+      - Key: Platform
+        Value: vanguard
+      - Key: Env
+        Value: poc
+      - Key: Createdby
+        Value: asteam
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER >> /etc/ecs/ecs.config
